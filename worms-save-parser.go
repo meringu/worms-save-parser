@@ -32,13 +32,16 @@ type team struct {
 	Null2                   [4]byte // No idea
 	TeamWinCount            uint32
 	TeamDeathmatchWinCount  uint32
-	Null3                   [16]byte // Draw count and something else ?
+	Null3                   [4]byte // No idea
+	TeamDrawCount           uint32
+	TeamDeathmatchDrawCount uint32
+	Null4                   [4]byte // No idea
 	TeamKills               uint32
 	TeamDeathmatchKills     uint32
-	Null4                   [4]byte // No idea
+	Null5                   [4]byte // No idea
 	TeamDeaths              uint32
 	TeamDeathmatchDeaths    uint32
-	Null5                   [649]byte // Zeros
+	Null6                   [649]byte // Zeros
 }
 
 type save struct {
@@ -120,6 +123,8 @@ func main() {
 		fmt.Printf("TeamDeathmatchLossCount: %d\n", s.Teams[t].TeamDeathmatchLossCount)
 		fmt.Printf("TeamWinCount:            %d\n", s.Teams[t].TeamWinCount)
 		fmt.Printf("TeamDeathmatchWinCount:  %d\n", s.Teams[t].TeamDeathmatchWinCount)
+		fmt.Printf("TeamDrawCount:           %d\n", s.Teams[t].TeamDrawCount)
+		fmt.Printf("TeamDeathmatchDrawCount: %d\n", s.Teams[t].TeamDeathmatchDrawCount)
 		fmt.Printf("TeamKills:               %d\n", s.Teams[t].TeamKills)
 		fmt.Printf("TeamDeathmatchKills:     %d\n", s.Teams[t].TeamDeathmatchKills)
 		fmt.Printf("TeamDeaths:              %d\n", s.Teams[t].TeamDeaths)
