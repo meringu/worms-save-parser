@@ -3,8 +3,10 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type header struct {
@@ -44,10 +46,29 @@ type team struct {
 	Null6                   [649]byte // Zeros
 }
 
+type team_stripped struct {
+	TeamName  string
+	WormNames [4]string
+	TeamLossCount           uint32
+	TeamDeathmatchLossCount uint32
+	TeamWinCount            uint32
+	TeamDeathmatchWinCount  uint32
+	TeamDrawCount           uint32
+	TeamDeathmatchDrawCount uint32
+	TeamKills               uint32
+	TeamDeathmatchKills     uint32
+	TeamDeaths              uint32
+	TeamDeathmatchDeaths    uint32
+}
+
 type save struct {
 	Null0 [512]byte
 	Teams [9]team
 	Null1 [192]byte
+}
+
+type save_stripped struct {
+	Teams [9]team_stripped
 }
 
 type card struct {
@@ -57,14 +78,23 @@ type card struct {
 	Saves   [15]save
 }
 
+func byte_arr_to_str(bytes [17]byte) string {
+	var new_str [17]byte
+	for i := 0; i <= 17; i++ {
+		if bytes[i] == 0 {
+			break
+		}
+		new_str[i] = bytes[i]
+  }
+  return strings.TrimRight(fmt.Sprintf("%s", new_str), "\x00")
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		panic(fmt.Sprintf("usage: %s [MCR_FILE]", os.Args[0]))
 	}
 
 	mcr := os.Args[1]
-
-	fmt.Printf("Parsing: \"%s\"\n", mcr)
 
 	file, err := os.Open(mcr)
 	if err != nil {
@@ -99,7 +129,6 @@ func main() {
 	for i := 0; i < 15; i++ {
 		if c.Headers[i].Identifier == wormsIdentifierBytes {
 			wormsSlot = i
-			fmt.Printf("Found Worms save at slot %d\n", i)
 		}
 	}
 
@@ -113,24 +142,25 @@ func main() {
 		panic(fmt.Sprintf("Expected save to be 8192 bytes; got %d", binary.Size(s)))
 	}
 
+	ss := save_stripped{}
+
 	for t := 0; t < 9; t++ {
-		fmt.Printf("TeamName:                %s\n", s.Teams[t].TeamName)
+		ss.Teams[t].TeamName = byte_arr_to_str(s.Teams[t].TeamName)
 		for i := 0; i < 4; i++ {
-			fmt.Printf("Worm %d:                  %s\n", i, s.Teams[t].WormNames[i])
+			ss.Teams[t].WormNames[i] = byte_arr_to_str(s.Teams[t].WormNames[i])
 		}
-
-		fmt.Printf("TeamLossCount:           %d\n", s.Teams[t].TeamLossCount)
-		fmt.Printf("TeamDeathmatchLossCount: %d\n", s.Teams[t].TeamDeathmatchLossCount)
-		fmt.Printf("TeamWinCount:            %d\n", s.Teams[t].TeamWinCount)
-		fmt.Printf("TeamDeathmatchWinCount:  %d\n", s.Teams[t].TeamDeathmatchWinCount)
-		fmt.Printf("TeamDrawCount:           %d\n", s.Teams[t].TeamDrawCount)
-		fmt.Printf("TeamDeathmatchDrawCount: %d\n", s.Teams[t].TeamDeathmatchDrawCount)
-		fmt.Printf("TeamKills:               %d\n", s.Teams[t].TeamKills)
-		fmt.Printf("TeamDeathmatchKills:     %d\n", s.Teams[t].TeamDeathmatchKills)
-		fmt.Printf("TeamDeaths:              %d\n", s.Teams[t].TeamDeaths)
-		fmt.Printf("TeamDeathmatchDeaths:    %d\n", s.Teams[t].TeamDeathmatchDeaths)
-
-		fmt.Printf("\n")
+		ss.Teams[t].TeamLossCount = s.Teams[t].TeamLossCount
+		ss.Teams[t].TeamDeathmatchLossCount = s.Teams[t].TeamDeathmatchLossCount
+		ss.Teams[t].TeamWinCount = s.Teams[t].TeamWinCount
+		ss.Teams[t].TeamDeathmatchWinCount = s.Teams[t].TeamDeathmatchWinCount
+		ss.Teams[t].TeamDrawCount = s.Teams[t].TeamDrawCount
+		ss.Teams[t].TeamDeathmatchDrawCount = s.Teams[t].TeamDeathmatchDrawCount
+		ss.Teams[t].TeamKills = s.Teams[t].TeamKills
+		ss.Teams[t].TeamDeathmatchKills = s.Teams[t].TeamDeathmatchKills
+		ss.Teams[t].TeamDeaths = s.Teams[t].TeamDeaths
+		ss.Teams[t].TeamDeathmatchDeaths = s.Teams[t].TeamDeathmatchDeaths
 	}
+	json, _ := json.MarshalIndent(ss, "", "  ")
+  fmt.Println(string(json))
 
 }
